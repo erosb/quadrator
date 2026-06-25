@@ -7,8 +7,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 
@@ -24,7 +27,7 @@ public interface Justmappr {
 
     <E> E requireByPK(Class<E> clazz, Object primaryKey);
 
-    <T> void save(T entity);
+    <T> T save(T entity);
 }
 
 @RequiredArgsConstructor
@@ -56,26 +59,59 @@ class DefaultJustmappr
     }
 
     @Override
-    public <E> void save(E entity) {
+    public <E> E save(E entity) {
         TypeMappingConfiguration<E> mappingConfig = config.mappingConfigOfType(entity.getClass());
         List<FieldMapping<E, ?>> fieldMappings = mappingConfig.getFieldMappings();
-        var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
-        fieldMappings.stream()
-                .map(f -> (FieldMapping<E, ?>) f)
-                .map(FieldMapping::getAttributeName)
-                .collect(joining(", ")) + ") VALUES (" +
+        if (mappingConfig.getPrimaryKeyMapping().isDbGenerated()) {
+            String primaryKeyAttr = mappingConfig.getPrimaryKeyMapping().getAttributeName();
+            List<FieldMapping<E, ?>> insertedFields = fieldMappings.stream()
+                    .filter(fm -> !fm.getAttributeName().equals(primaryKeyAttr))
+                    .toList();
+            var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
+                    insertedFields.stream()
+                            .map(FieldMapping::getAttributeName)
+                            .collect(joining(", ")) + ") VALUES (" +
 
-        String.join(",", Collections.nCopies(fieldMappings.size(), "?")) + ")";
-
-        try {
-            var stmt = getConnection().prepareStatement(sql);
-            for (int i = 0; i < fieldMappings.size(); i++) {
-                stmt.setObject(i + 1, fieldMappings.get(i).getGetter().apply(entity));
+                    String.join(",", Collections.nCopies(insertedFields.size(), "?")) + ")";
+            System.out.println(sql);
+            try {
+                var stmt = getConnection().prepareStatement(sql);
+                Map<String, Object> attributesForReconst = new HashMap<>();
+                for (int i = 0; i < insertedFields.size(); i++) {
+                    FieldMapping<E, ?> insertedFieldMapping = insertedFields.get(i);
+                    Object fieldValue = insertedFieldMapping.getGetter().apply(entity);
+                    stmt.setObject(i + 1, fieldValue);
+                    attributesForReconst.put(insertedFieldMapping.getAttributeName(), fieldValue);
+                }
+                stmt.execute();
+                ResultSet generated = stmt.getGeneratedKeys();
+//                if (!generated.next()) throw new IllegalStateException();
+                generated.getObject("id");
+                attributesForReconst.put(primaryKeyAttr, generated.getObject(1));
+                return mappingConfig.getReconstitutionFactory().reconstitute(new MapBackedResultSet(attributesForReconst));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-            stmt.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        } else {
+            var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
+                    fieldMappings.stream()
+                            .map(f -> (FieldMapping<E, ?>) f)
+                            .map(FieldMapping::getAttributeName)
+                            .collect(joining(", ")) + ") VALUES (" +
+
+                    String.join(",", Collections.nCopies(fieldMappings.size(), "?")) + ")";
+
+            try {
+                var stmt = getConnection().prepareStatement(sql);
+                for (int i = 0; i < fieldMappings.size(); i++) {
+                    stmt.setObject(i + 1, fieldMappings.get(i).getGetter().apply(entity));
+                }
+                stmt.execute();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return entity;
     }
 
     private <E> String baseQuery(Class<E> clazz) {
@@ -95,4 +131,5 @@ class DefaultJustmappr
             throw new RuntimeException(e);
         }
     }
+
 }

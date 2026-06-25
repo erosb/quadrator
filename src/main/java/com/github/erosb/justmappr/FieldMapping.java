@@ -12,4 +12,5 @@ public class FieldMapping<E, F> {
     String attributeName;
     @NonNull
     Function<E, F> getter;
+    boolean dbGenerated;
 }

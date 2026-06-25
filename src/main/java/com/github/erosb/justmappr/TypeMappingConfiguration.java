@@ -58,15 +58,11 @@ public interface TypeMappingConfiguration<T> {
     static <T> TypeMappingConfiguration<T> trivialMapping(Class<T> type, String primaryKeyProperty) {
         Function<T, Object> getter = getterFor(type, primaryKeyProperty);
         return new TrivialTypeMappingConfiguration<>(type, new FieldMapping<>(
-                toDBName(primaryKeyProperty), getter
+                toDBName(primaryKeyProperty), getter, true
         ));
     }
 
     String getRelationName();
-
-    String getAttributeName(String javaFieldName);
-
-    String getJavaFieldName(String attributeName);
 
     ReconstitutionFactory<T> getReconstitutionFactory();
 
@@ -89,8 +85,6 @@ class TrivialTypeMappingConfiguration<T>
     private final String relationName;
     private final Class<T> javaType;
     private final List<FieldMapping<T, ?>> fieldMappings;
-    private final Map<String, String> javaFieldToAttribute;
-    private final Map<String, String> attributeToJavaField;
     private final FieldMapping<T, ?> primaryKeyMapping;
 
     TrivialTypeMappingConfiguration(Class<T> javaType, FieldMapping<T, ?> primaryKeyMapping) {
@@ -98,18 +92,15 @@ class TrivialTypeMappingConfiguration<T>
         this.javaType = javaType;
         relationName = toDBName(javaType.getSimpleName());
         Field[] fields = javaType.getDeclaredFields();
-        javaFieldToAttribute = new HashMap<>(fields.length);
-        attributeToJavaField = new HashMap<>(fields.length);
         List<FieldMapping<T, ?>> fieldMappings = new ArrayList<>(javaType.getDeclaredFields().length);
         Arrays.stream(fields)
                 .map(Field::getName)
                 .forEach(fieldName -> {
                     String attributeName = toDBName(fieldName);
-                    javaFieldToAttribute.put(fieldName, attributeName);
-                    attributeToJavaField.put(attributeName, fieldName);
-                    fieldMappings.add(new FieldMapping<T, Object>(
+                    fieldMappings.add(new FieldMapping<>(
                             fieldName,
-                            TypeMappingConfiguration.getterFor(javaType, fieldName)
+                            TypeMappingConfiguration.getterFor(javaType, fieldName),
+                            false
                     ));
                 });
         this.fieldMappings = unmodifiableList(fieldMappings);
@@ -118,16 +109,6 @@ class TrivialTypeMappingConfiguration<T>
     @Override
     public String getRelationName() {
         return relationName;
-    }
-
-    @Override
-    public String getAttributeName(String javaFieldName) {
-        return javaFieldToAttribute.get(javaFieldName);
-    }
-
-    @Override
-    public String getJavaFieldName(String attributeName) {
-        return attributeToJavaField.get(attributeName);
     }
 
     @Override
@@ -142,7 +123,7 @@ class TrivialTypeMappingConfiguration<T>
 
     @Override
     public List<String> getAttributeNames() {
-        return attributeToJavaField.keySet().stream().toList();
+        return fieldMappings.stream().map(FieldMapping::getAttributeName).toList();
     }
 
     public FieldMapping<T, ?> getPrimaryKeyMapping() {
@@ -170,16 +151,6 @@ class DefaultTypeMappingConfiguration<T>
     @Override
     public String getRelationName() {
         return relationName;
-    }
-
-    @Override
-    public String getAttributeName(String javaFieldName) {
-        return "";
-    }
-
-    @Override
-    public String getJavaFieldName(String attributeName) {
-        return "";
     }
 
     @Override
