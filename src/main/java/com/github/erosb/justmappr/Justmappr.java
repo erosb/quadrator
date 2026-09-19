@@ -2,10 +2,7 @@ package com.github.erosb.justmappr;
 
 import lombok.RequiredArgsConstructor;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,7 +52,7 @@ class DefaultJustmappr
 
     private Connection getConnection()
             throws SQLException {
-        return DriverManager.getConnection(config.getConnection());
+        return config.getDataSource().getConnection(); //DriverManager.getConnection(config.getConnection());
     }
 
     @Override
@@ -75,7 +72,7 @@ class DefaultJustmappr
                     String.join(",", Collections.nCopies(insertedFields.size(), "?")) + ")";
             System.out.println(sql);
             try {
-                var stmt = getConnection().prepareStatement(sql);
+                var stmt = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 Map<String, Object> attributesForReconst = new HashMap<>();
                 for (int i = 0; i < insertedFields.size(); i++) {
                     FieldMapping<E, ?> insertedFieldMapping = insertedFields.get(i);
@@ -83,12 +80,14 @@ class DefaultJustmappr
                     stmt.setObject(i + 1, fieldValue);
                     attributesForReconst.put(insertedFieldMapping.getAttributeName(), fieldValue);
                 }
-                stmt.execute();
+                stmt.executeUpdate();
                 ResultSet generated = stmt.getGeneratedKeys();
-//                if (!generated.next()) throw new IllegalStateException();
-                generated.getObject("id");
+
+                if (!generated.next()) throw new IllegalStateException();
                 attributesForReconst.put(primaryKeyAttr, generated.getObject(1));
+
                 return mappingConfig.getReconstitutionFactory().reconstitute(new MapBackedResultSet(attributesForReconst));
+
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }

@@ -25,7 +25,7 @@ public class ReconstitutionFactoryTest {
 
     private Justmappr buildJustmappr() {
         return Justmappr.create(Justmappr.config()
-                .connection("jdbc:h2:mem:test")
+//                .da
                 .typeMapping(TypeMappingConfiguration.builderFor(User.class)
                         .relationName("users")
                         .primaryKeyMapping(User::getId, "id")

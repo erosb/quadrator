@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 
+import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +23,7 @@ public class JustmapprConfig {
     }
 
     @Getter
-    private final String connection;
+    private final DataSource dataSource;
 
     private final Map<Class<?>, TypeMappingConfiguration> typeMappingConfig;
 
