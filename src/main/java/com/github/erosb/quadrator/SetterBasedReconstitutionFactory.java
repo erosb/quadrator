@@ -36,7 +36,7 @@ class SetterBasedReconstitutionFactory<T>
     private final List<FieldMapping<T, ?>> fieldMappings;
 
     @Override
-    public T reconstitute(ResultSet rs)
+    public T reconstitute(ResultSetAccessor rs)
             throws SQLException {
         try {
             T instance = (T) javaType.getConstructors()[0].newInstance();

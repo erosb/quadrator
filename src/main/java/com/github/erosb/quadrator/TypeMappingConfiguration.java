@@ -3,6 +3,7 @@ package com.github.erosb.quadrator;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,6 +29,10 @@ public interface TypeMappingConfiguration<T> {
                     setterMethod.setAccessible(true);
                     return (BiFunction<E, Object, E>) (entity, pk) -> {
                         try {
+                            System.out.println("setting " + pk.getClass().getSimpleName() + " into " + fieldName + " on " + entity);
+                            if (pk instanceof BigInteger) { // ugly and needs cleanup
+                                pk = ((BigInteger) pk).intValue();
+                            }
                             setterMethod.invoke(entity, pk);
                         } catch (Exception e) {
                             throw new RuntimeException(e);

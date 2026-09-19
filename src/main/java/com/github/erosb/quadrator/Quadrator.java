@@ -86,7 +86,7 @@ class DefaultQuadrator
                 if (!generated.next()) throw new IllegalStateException();
                 attributesForReconst.put(primaryKeyAttr, generated.getObject(1));
 
-                return mappingConfig.getReconstitutionFactory().reconstitute(new MapBackedResultSet(attributesForReconst));
+                return mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(attributesForReconst));
 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -125,7 +125,7 @@ class DefaultQuadrator
         constr.setAccessible(true);
         var mappingConfig = config.mappingConfigOfType(clazz);
         try {
-            return (E) mappingConfig.getReconstitutionFactory().reconstitute(rs);
+            return (E) mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
