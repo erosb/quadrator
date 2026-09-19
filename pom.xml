@@ -4,11 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.erosb</groupId>
-    <artifactId>justmappr</artifactId>
+    <artifactId>quadrator</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>JustmappR</name>
+    <name>Quadrator</name>
     <description>ORM library doing nothing else but mapping</description>
-    <url>https://github.com/erosb/justmappr</url>
+    <url>https://github.com/erosb/quadrator</url>
     <licenses>
         <license/>
     </licenses>

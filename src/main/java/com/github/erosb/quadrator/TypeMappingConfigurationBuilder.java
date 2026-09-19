@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 public class UnknownEntityTypeException extends RuntimeException {
 

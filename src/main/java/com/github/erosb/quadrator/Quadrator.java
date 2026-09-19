@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -12,14 +12,14 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 
-public interface Justmappr {
+public interface Quadrator {
 
-    static Justmappr create(JustmapprConfig config) {
-        return new DefaultJustmappr(config);
+    static Quadrator create(QuadratorConfig config) {
+        return new DefaultQuadrator(config);
     }
 
-    static JustmapprConfig.JustmapprConfigBuilder config() {
-        return JustmapprConfig.builder();
+    static QuadratorConfig.QuadratorConfigBuilder config() {
+        return QuadratorConfig.builder();
     }
 
     <E> E requireByPK(Class<E> clazz, Object primaryKey);
@@ -28,10 +28,10 @@ public interface Justmappr {
 }
 
 @RequiredArgsConstructor
-class DefaultJustmappr
-        implements Justmappr {
+class DefaultQuadrator
+        implements Quadrator {
 
-    private final JustmapprConfig config;
+    private final QuadratorConfig config;
 
     @Override
     public <E> E requireByPK(Class<E> clazz, Object primaryKey) {

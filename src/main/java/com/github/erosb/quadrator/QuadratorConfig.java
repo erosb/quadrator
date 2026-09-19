@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -9,13 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Builder
-public class JustmapprConfig {
+public class QuadratorConfig {
 
-    public static class JustmapprConfigBuilder {
+    public static class QuadratorConfigBuilder {
 
         private Map<Class<?>, TypeMappingConfiguration> typeMappingConfig = new HashMap<>();
 
-        JustmapprConfigBuilder typeMapping(TypeMappingConfiguration mappingConfig) {
+        QuadratorConfigBuilder typeMapping(TypeMappingConfiguration mappingConfig) {
             typeMappingConfig.put(mappingConfig.getType(), mappingConfig);
             return this;
         }

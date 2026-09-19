@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 import com.mysql.cj.jdbc.MysqlDataSourceFactory;
@@ -19,12 +19,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.github.erosb.justmappr.TypeMappingConfiguration.trivialMapping;
+import static com.github.erosb.quadrator.TypeMappingConfiguration.trivialMapping;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Testcontainers
-public class JustmapprTest {
+public class QuadratorTest {
 
     @Container
     public MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
@@ -54,7 +54,7 @@ public class JustmapprTest {
         st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
     }
 
-    private Justmappr buildJustmappr() {
+    private Quadrator buildQuadrator() {
         MysqlDataSource ds = new MysqlDataSource();
         mysql.getHost();
         ds.setServerName(mysql.getHost());
@@ -62,7 +62,7 @@ public class JustmapprTest {
         ds.setPort(mysql.getFirstMappedPort());
         ds.setUser("root");
         ds.setPassword("test");
-        return Justmappr.create(Justmappr.config()
+        return Quadrator.create(Quadrator.config()
                 .dataSource(ds)
                 .typeMapping(trivialMapping(User.class, "id"))
                 .build());
@@ -77,9 +77,9 @@ public class JustmapprTest {
 
     @Test
     public void requireByPK_success() {
-        var justmappr = buildJustmappr();
+        var quadrator = buildQuadrator();
 
-        User u = justmappr.requireByPK(User.class, 1);
+        User u = quadrator.requireByPK(User.class, 1);
 
         assertEquals("asdasd", u.getName());
         assertEquals(1, u.getId());
@@ -88,35 +88,35 @@ public class JustmapprTest {
     @Test
     public void requireByPK_notFound() {
         assertThrows(EntityNotFoundException.class, () ->
-                buildJustmappr().requireByPK(User.class, 10)
+                buildQuadrator().requireByPK(User.class, 10)
         );
     }
 
     @Test
     public void requireByPK_unhandledEntity() {
         assertThrows(UnknownEntityTypeException.class, () ->
-                buildJustmappr().requireByPK(ConcurrentHashMap.class, 10));
+                buildQuadrator().requireByPK(ConcurrentHashMap.class, 10));
     }
 
     @Test
     public void saveSuccess() {
-        var justmappr = buildJustmappr();
+        var quadrator = buildQuadrator();
 
         User u = new User(3, "John D");
-        justmappr.save(u);
+        quadrator.save(u);
 
-        var actual = justmappr.requireByPK(User.class, 3);
+        var actual = quadrator.requireByPK(User.class, 3);
         assertEquals(u, actual);
     }
 
     @Test
     public void saveWithoutId() {
-        var justmappr = buildJustmappr();
+        var quadrator = buildQuadrator();
 
         User u = new User(null, "John D");
-        u = justmappr.save(u);
+        u = quadrator.save(u);
 
-        var actual = justmappr.requireByPK(User.class, 3);
+        var actual = quadrator.requireByPK(User.class, 3);
         assertEquals(u, actual);
     }
 

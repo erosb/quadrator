@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,8 +23,8 @@ public class ReconstitutionFactoryTest {
         st.executeUpdate("insert into users (user_name) values ('asdasd'), ('bsdbsd')");
     }
 
-    private Justmappr buildJustmappr() {
-        return Justmappr.create(Justmappr.config()
+    private Quadrator buildQuadrator() {
+        return Quadrator.create(Quadrator.config()
 //                .da
                 .typeMapping(TypeMappingConfiguration.builderFor(User.class)
                         .relationName("users")
@@ -38,9 +38,9 @@ public class ReconstitutionFactoryTest {
 
     @Test
     void reconstitutionFactoryTest() {
-        var justmappr = buildJustmappr();
+        var quadrator = buildQuadrator();
 
-        var u = justmappr.requireByPK(User.class, 1);
+        var u = quadrator.requireByPK(User.class, 1);
 
         assertEquals(1, u.getId());
         assertEquals("asdasd", u.getName());

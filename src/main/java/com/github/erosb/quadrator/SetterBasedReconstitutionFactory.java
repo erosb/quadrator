@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import static com.github.erosb.justmappr.TypeMappingConfiguration.setterFor;
+import static com.github.erosb.quadrator.TypeMappingConfiguration.setterFor;
 
 @RequiredArgsConstructor
 class SetterBasedReconstitutionFactory<T>

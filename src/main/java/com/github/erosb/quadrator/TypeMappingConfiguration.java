@@ -1,4 +1,4 @@
-package com.github.erosb.justmappr;
+package com.github.erosb.quadrator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.github.erosb.justmappr.TrivialTypeMappingConfiguration.toDBName;
+import static com.github.erosb.quadrator.TrivialTypeMappingConfiguration.toDBName;
 import static java.util.Collections.unmodifiableList;
 
 public interface TypeMappingConfiguration<T> {
