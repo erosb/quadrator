@@ -1,12 +1,9 @@
 package com.github.erosb.quadrator;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Value;
+import lombok.*;
 
-import javax.sql.DataSource;
-import java.util.HashMap;
-import java.util.Map;
+import javax.sql.*;
+import java.util.*;
 
 @Builder
 public class QuadratorConfig {
@@ -23,7 +20,7 @@ public class QuadratorConfig {
     }
 
     @Getter
-    private final DataSource dataSource;
+    private final @NonNull DataSource dataSource;
 
     private final Map<Class<?>, TypeMappingConfiguration> typeMappingConfig;
 
@@ -34,8 +31,6 @@ public class QuadratorConfig {
         }
         return mappingConfig;
     }
-
-
 
 
 }
