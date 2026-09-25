@@ -2,7 +2,6 @@ package com.github.erosb.quadrator;
 
 import com.mysql.cj.jdbc.*;
 import org.h2.jdbcx.*;
-import org.testcontainers.junit.jupiter.*;
 import org.testcontainers.mysql.*;
 import org.testcontainers.utility.*;
 
@@ -11,22 +10,20 @@ import java.sql.*;
 
 public class DataSources {
 
-    @Container
-    public static MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
+    private static MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
 
     static {
         mysql.start();
     }
 
 
-    public static DataSource mem() {
+    public static DataSource mem(boolean insertFixtreus) {
         try {
-            Class.forName("org.h2.Driver");
-            Connection conn = DriverManager.getConnection("jdbc:h2:mem:test");
-            insertFixtures(conn);
-
             JdbcDataSource dataSource = new JdbcDataSource();
-            dataSource.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
+            dataSource.setURL("jdbc:h2:mem:test");
+            if (insertFixtreus) {
+                insertFixtures(dataSource.getConnection());
+            }
             return dataSource;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -36,11 +33,11 @@ public class DataSources {
     private static void insertFixtures(Connection conn) throws SQLException {
         Statement st = conn.createStatement();
         st.execute("drop table if exists `user`");
-        st.execute("create table users (id int primary key auto_increment, user_name text)");
-        st.executeUpdate("insert into users (user_name) values ('asdasd'), ('bsdbsd')");
+        st.execute("create table `user` (id int primary key auto_increment, name text)");
+        st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
     }
 
-    public static DataSource mysql() {
+    public static DataSource mysql(boolean insertFixtures) {
         try {
             MysqlDataSource ds = new MysqlDataSource();
             mysql.getHost();
@@ -49,10 +46,9 @@ public class DataSources {
             ds.setPort(mysql.getFirstMappedPort());
             ds.setUser("root");
             ds.setPassword("test");
-            Statement st = ds.getConnection().createStatement();
-            st.execute("drop table if exists `user`");
-            st.execute("create table `user` (id int primary key auto_increment, name text)");
-            st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
+            if (insertFixtures) {
+                insertFixtures(ds.getConnection());
+            }
             return ds;
         } catch (Exception e) {
             throw new RuntimeException(e);

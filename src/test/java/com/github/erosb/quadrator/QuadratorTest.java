@@ -1,7 +1,6 @@
 package com.github.erosb.quadrator;
 
 import org.junit.jupiter.api.*;
-import org.testcontainers.junit.jupiter.*;
 
 import java.util.concurrent.*;
 
@@ -9,12 +8,11 @@ import static com.github.erosb.quadrator.DataSources.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Testcontainers
 public class QuadratorTest {
 
     private Quadrator buildQuadrator() {
         return Quadrator.create(Quadrator.config()
-                .dataSource(mysql())
+                .dataSource(mysql(true))
                 .typeMapping(trivialMapping(User.class, "id"))
                 .build());
     }
