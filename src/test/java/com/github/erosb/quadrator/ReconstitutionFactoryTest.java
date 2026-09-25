@@ -1,14 +1,12 @@
 package com.github.erosb.quadrator;
 
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import lombok.*;
+import org.h2.jdbcx.*;
+import org.junit.jupiter.api.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
+import java.sql.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ReconstitutionFactoryTest {
 
@@ -23,9 +21,12 @@ public class ReconstitutionFactoryTest {
         st.executeUpdate("insert into users (user_name) values ('asdasd'), ('bsdbsd')");
     }
 
+    @SneakyThrows
     private Quadrator buildQuadrator() {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
         return Quadrator.create(Quadrator.config()
-//                .da
+                .dataSource(dataSource)
                 .typeMapping(TypeMappingConfiguration.builderFor(User.class)
                         .relationName("users")
                         .primaryKeyMapping(User::getId, "id")

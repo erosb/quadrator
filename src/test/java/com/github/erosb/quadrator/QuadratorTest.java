@@ -1,13 +1,11 @@
 package com.github.erosb.quadrator;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import com.mysql.cj.jdbc.MysqlDataSourceFactory;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.MySQLContainerProvider;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
@@ -27,17 +25,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class QuadratorTest {
 
     @Container
-    public MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
+    public static MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
 
-//    new GenericContainer(DockerImageName.parse("mysql:8.0"))
-//            .withExposedPorts(3306);
 
-    @BeforeEach @SneakyThrows
-    void insertFixtures() {
+    @BeforeAll
+    @SneakyThrows
+    static void before() {
         mysql.start();
         Class.forName("org.h2.Driver");
         Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
+    }
 
+    @BeforeEach
+    @SneakyThrows
+    void insertFixtures() {
         MysqlDataSource ds = new MysqlDataSource();
         mysql.getHost();
         ds.setServerName(mysql.getHost());

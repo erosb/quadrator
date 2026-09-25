@@ -1,16 +1,11 @@
 package com.github.erosb.quadrator;
 
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.sql.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.*;
 
 public interface Quadrator {
 
@@ -70,7 +65,6 @@ class DefaultQuadrator
                             .collect(joining(", ")) + ") VALUES (" +
 
                     String.join(",", Collections.nCopies(insertedFields.size(), "?")) + ")";
-            System.out.println(sql);
             try {
                 var stmt = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 Map<String, Object> attributesForReconst = new HashMap<>();

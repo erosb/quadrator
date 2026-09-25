@@ -1,19 +1,14 @@
 package com.github.erosb.quadrator;
 
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
-import java.lang.reflect.Field;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.lang.reflect.*;
+import java.math.*;
+import java.util.*;
+import java.util.function.*;
 
-import static com.github.erosb.quadrator.TrivialTypeMappingConfiguration.toDBName;
-import static java.util.Collections.unmodifiableList;
+import static com.github.erosb.quadrator.TrivialTypeMappingConfiguration.*;
+import static java.util.Collections.*;
 
 public interface TypeMappingConfiguration<T> {
 
@@ -29,7 +24,6 @@ public interface TypeMappingConfiguration<T> {
                     setterMethod.setAccessible(true);
                     return (BiFunction<E, Object, E>) (entity, pk) -> {
                         try {
-                            System.out.println("setting " + pk.getClass().getSimpleName() + " into " + fieldName + " on " + entity);
                             if (pk instanceof BigInteger) { // ugly and needs cleanup
                                 pk = ((BigInteger) pk).intValue();
                             }
