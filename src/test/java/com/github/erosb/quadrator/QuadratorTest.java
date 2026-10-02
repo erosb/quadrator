@@ -2,6 +2,7 @@ package com.github.erosb.quadrator;
 
 import org.junit.jupiter.api.*;
 
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.github.erosb.quadrator.DataSources.*;
@@ -14,6 +15,13 @@ public class QuadratorTest {
         return Quadrator.create(Quadrator.config()
                 .dataSource(mysql(true))
                 .typeMapping(trivialMapping(User.class, "id"))
+                .typeMapping(TypeMappingConfiguration.builderFor(Event.class)
+                                .relationName("events")
+                                .primaryKeyMapping(Event::getId, "id", false)
+                                .fieldMapping(Event::getDescription, "description")
+//                        .reconstitutionFactory(new SetterBasedReconstitutionFactory<>(Event.class))
+                                .build()
+                )
                 .build());
     }
 
@@ -60,6 +68,24 @@ public class QuadratorTest {
 
         var actual = quadrator.requireByPK(User.class, 3);
         assertEquals(u, actual);
+    }
+
+    @Test
+    void insertWith_assignedId() {
+        var quadrator = buildQuadrator();
+
+        Event e = new Event(UUID.randomUUID(), "Test event");
+        quadrator.save(e);
+
+        var actual = quadrator.requireByPK(Event.class, e.getId());
+        assertEquals(e, actual);
+    }
+
+    @Test
+    void saveUnmanagedEntity() {
+        var quadrator = buildQuadrator();
+
+        assertThrows(UnknownEntityTypeException.class, () -> quadrator.save(new Object()));
     }
 
 }

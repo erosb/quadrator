@@ -1,10 +1,11 @@
 package com.github.erosb.quadrator;
 
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.*;
+
+import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 
 @RequiredArgsConstructor
 public class TypeMappingConfigurationBuilder<T> {
@@ -25,7 +26,11 @@ public class TypeMappingConfigurationBuilder<T> {
     }
 
     public <PK> TypeMappingConfigurationBuilder<T> primaryKeyMapping(Function<T, PK> getter, String attributeName) {
-        this.primaryKeyMapping = new FieldMapping<>(attributeName, getter, true);
+        return primaryKeyMapping(getter, attributeName, true);
+    }
+
+    public <PK> TypeMappingConfigurationBuilder<T> primaryKeyMapping(Function<T, PK> getter, String attributeName, boolean dbGenerated) {
+        this.primaryKeyMapping = new FieldMapping<>(attributeName, getter, dbGenerated);
         return this;
     }
 
@@ -40,6 +45,10 @@ public class TypeMappingConfigurationBuilder<T> {
     }
 
     public TypeMappingConfiguration build() {
+        if (reconstitutionFactory == null) {
+            reconstitutionFactory = new SetterBasedReconstitutionFactory<>(type, concatFieldMappings(primaryKeyMapping, fieldMappings));
+        }
+        System.out.println("fieldMappings = " + fieldMappings);
         return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, primaryKeyMapping,
                 reconstitutionFactory);
     }

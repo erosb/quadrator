@@ -27,6 +27,10 @@ public interface TypeMappingConfiguration<T> {
                             if (pk instanceof BigInteger) { // ugly and needs cleanup
                                 pk = ((BigInteger) pk).intValue();
                             }
+                            if (setterMethod.getParameterTypes()[0] == UUID.class) {
+                                pk = UUID.fromString(pk.toString());
+                            }
+                            System.out.println(pk.getClass().getSimpleName() + " " + pk);
                             setterMethod.invoke(entity, pk);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
@@ -61,6 +65,13 @@ public interface TypeMappingConfiguration<T> {
         ));
     }
 
+    static <T> List<FieldMapping<T, ?>> concatFieldMappings(FieldMapping<T, ?> head, List<FieldMapping<T, ?>> tail) {
+        var rval = new ArrayList<FieldMapping<T, ?>>(1 + tail.size());
+        rval.add(head);
+        rval.addAll(tail);
+        return unmodifiableList(rval);
+    }
+
     String getRelationName();
 
     ReconstitutionFactory<T> getReconstitutionFactory();
@@ -72,6 +83,10 @@ public interface TypeMappingConfiguration<T> {
     FieldMapping<T, ?> getPrimaryKeyMapping();
 
     List<FieldMapping<T, ?>> getFieldMappings();
+
+    default List<FieldMapping<T, ?>> allFieldMappings() {
+        return concatFieldMappings(getPrimaryKeyMapping(), getFieldMappings());
+    }
 }
 
 class TrivialTypeMappingConfiguration<T>
@@ -171,12 +186,12 @@ class DefaultTypeMappingConfiguration<T>
     }
 
     @Override
-    public FieldMapping<?, ?> getPrimaryKeyMapping() {
+    public FieldMapping<T, ?> getPrimaryKeyMapping() {
         return primaryKeyMapping;
     }
 
     @Override
-    public List<FieldMapping<?, ?>> getFieldMappings() {
-        return List.of();
+    public List<FieldMapping<T, ?>> getFieldMappings() {
+        return fieldMappings;
     }
 }

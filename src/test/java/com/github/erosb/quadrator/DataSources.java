@@ -31,10 +31,16 @@ public class DataSources {
     }
 
     private static void insertFixtures(Connection conn) throws SQLException {
-        Statement st = conn.createStatement();
-        st.execute("drop table if exists `user`");
-        st.execute("create table `user` (id int primary key auto_increment, name text)");
-        st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
+        try (Statement st = conn.createStatement()) {
+            st.execute("drop table if exists `user`");
+            st.execute("create table `user` (id int primary key auto_increment, name text)");
+            st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("drop table if exists `events`");
+            st.execute("create table `events` (id varchar(36) primary key, description text)");
+            st.executeUpdate("insert into `events` (id, description) values (uuid(), 'Test event 1'), (uuid(), 'Test event 2')");
+        }
     }
 
     public static DataSource mysql(boolean insertFixtures) {

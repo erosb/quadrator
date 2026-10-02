@@ -86,18 +86,19 @@ class DefaultQuadrator
                 throw new RuntimeException(e);
             }
         } else {
+            var allFieldMappings = mappingConfig.allFieldMappings();
             var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
-                    fieldMappings.stream()
-                            .map(f -> (FieldMapping<E, ?>) f)
+                    allFieldMappings.stream()
                             .map(FieldMapping::getAttributeName)
                             .collect(joining(", ")) + ") VALUES (" +
 
-                    String.join(",", Collections.nCopies(fieldMappings.size(), "?")) + ")";
-
+                    String.join(",", Collections.nCopies(allFieldMappings.size(), "?")) + ")";
+            System.out.println(sql);
             try {
                 var stmt = getConnection().prepareStatement(sql);
-                for (int i = 0; i < fieldMappings.size(); i++) {
-                    stmt.setObject(i + 1, fieldMappings.get(i).getGetter().apply(entity));
+                for (int i = 0; i < allFieldMappings.size(); i++) {
+                    Object value = allFieldMappings.get(i).getGetter().apply(entity);
+                    stmt.setObject(i + 1, value == null ? null : value.toString());
                 }
                 stmt.execute();
             } catch (SQLException e) {

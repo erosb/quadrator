@@ -1,14 +1,12 @@
 package com.github.erosb.quadrator;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import java.lang.reflect.*;
+import java.sql.*;
+import java.util.*;
 
-import static com.github.erosb.quadrator.TypeMappingConfiguration.setterFor;
+import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 
 @RequiredArgsConstructor
 class SetterBasedReconstitutionFactory<T>
@@ -39,8 +37,13 @@ class SetterBasedReconstitutionFactory<T>
     public T reconstitute(ResultSetAccessor rs)
             throws SQLException {
         try {
-            T instance = (T) javaType.getConstructors()[0].newInstance();
+            var c = Arrays.stream(javaType.getConstructors())
+                    .filter(ctor -> ctor.getParameters().length == 0)
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No default constructor found for " + javaType.getName()));
+            T instance = (T) c.newInstance();
             for (FieldMapping fieldMapping : fieldMappings) {
+                System.out.println("Setting " + fieldMapping.getAttributeName() + " to " + rs.getObject(fieldMapping.getAttributeName()));
                 setterFor(javaType, toJavaName(fieldMapping.getAttributeName()))
                         .apply(instance, rs.getObject(fieldMapping.getAttributeName()));
             }
