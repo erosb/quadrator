@@ -1,8 +1,9 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.*;
 
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 
@@ -13,13 +14,10 @@ import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 public class TypeMappingConfigurationBuilder<T> {
 
     private final Class<T> type;
-
     private String relationName;
-
     private FieldMapping<T, ?> primaryKeyMapping;
-
     private final List<FieldMapping<T, ?>> fieldMappings = new ArrayList<>();
-
+    private final List<ToManyMapping<T, ?>> associationMappings = new ArrayList<>();
     private ReconstitutionFactory<T> reconstitutionFactory;
 
     public TypeMappingConfigurationBuilder<T> relationName(String relationName) {
@@ -53,5 +51,27 @@ public class TypeMappingConfigurationBuilder<T> {
         log.debug("fieldMappings = {}", fieldMappings);
         return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, primaryKeyMapping,
                 reconstitutionFactory);
+    }
+
+    public <F> TypeMappingConfigurationBuilder<T> associationMapping(Function<T, F> getter, String name) {
+        boolean isToMany = singleAbstractMethod(getter).getReturnType().isAssignableFrom(Iterable.class);
+        if (!isToMany) {
+            throw new IllegalArgumentException("Association mapping is not to-many (not supported)");
+        }
+        var mapping = new ToManyMapping<>(this.relationName + "_" + primaryKeyMapping.getAttributeName(), getter);
+        this.associationMappings.add(mapping);
+        return this;
+    }
+
+    private static <T, F> Method singleAbstractMethod(Function<T, F> members) {
+        List<Method> abstractMethods = Arrays.stream(members.getClass().getInterfaces())
+                .flatMap(iface -> Arrays.stream(iface.getMethods()))
+                .filter(method -> Modifier.isAbstract(method.getModifiers()))
+                .distinct()
+                .toList();
+        if (abstractMethods.size() != 1) {
+            throw new IllegalStateException("Expected exactly one abstract method, found " + abstractMethods.size());
+        }
+        return abstractMethods.getFirst();
     }
 }

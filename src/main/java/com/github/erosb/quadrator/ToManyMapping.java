@@ -5,10 +5,9 @@ import lombok.*;
 import java.util.function.*;
 
 @Value
-class FieldMapping<T, F> {
+class ToManyMapping<T, F> {
     @NonNull
-    String attributeName;
+    String foreignKeyAttributeName;
     @NonNull
     Function<T, F> getter;
-    boolean dbGenerated;
 }

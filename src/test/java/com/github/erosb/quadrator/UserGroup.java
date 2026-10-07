@@ -1,9 +1,13 @@
 package com.github.erosb.quadrator;
 
+import lombok.*;
+
 import java.util.*;
 
-public record UserGroup(
-        String name,
-        List<User> members
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserGroup {
+    String name;
+    List<User> members;
 }

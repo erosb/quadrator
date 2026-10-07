@@ -8,15 +8,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OneToManyTest {
 
-
     private Quadrator buildQuadrator() {
         return Quadrator.create(Quadrator.config()
-                .dataSource(mysql(true))
+                .dataSource(mem(true))
                 .typeMapping(trivialMapping(User.class, "id"))
                 .typeMapping(TypeMappingConfiguration.builderFor(UserGroup.class)
                         .relationName("user_groups")
-                        .primaryKeyMapping(UserGroup::name, "name", false)
-                        .fieldMapping(UserGroup::members, "members")
+                        .primaryKeyMapping(UserGroup::getName, "name", false)
+                        .associationMapping(UserGroup::getMembers, "members")
                         .build()
                 ).build()
         );

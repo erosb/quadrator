@@ -12,10 +12,6 @@ public class DataSources {
 
     private static MySQLContainer mysql = new MySQLContainer(DockerImageName.parse("mysql:latest"));
 
-    static {
-        mysql.start();
-    }
-
 
     public static DataSource mem(boolean insertFixtreus) {
         try {
@@ -49,6 +45,9 @@ public class DataSources {
     }
 
     public static DataSource mysql(boolean insertFixtures) {
+        if (!mysql.isRunning()) {
+            mysql.start();
+        }
         try {
             MysqlDataSource ds = new MysqlDataSource();
             mysql.getHost();
