@@ -1,6 +1,7 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.function.*;
@@ -8,6 +9,7 @@ import java.util.function.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 
 @RequiredArgsConstructor
+@Slf4j
 public class TypeMappingConfigurationBuilder<T> {
 
     private final Class<T> type;
@@ -48,7 +50,7 @@ public class TypeMappingConfigurationBuilder<T> {
         if (reconstitutionFactory == null) {
             reconstitutionFactory = new SetterBasedReconstitutionFactory<>(type, concatFieldMappings(primaryKeyMapping, fieldMappings));
         }
-        System.out.println("fieldMappings = " + fieldMappings);
+        log.debug("fieldMappings = {}", fieldMappings);
         return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, primaryKeyMapping,
                 reconstitutionFactory);
     }

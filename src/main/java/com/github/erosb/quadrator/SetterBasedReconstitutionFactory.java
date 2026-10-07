@@ -1,6 +1,7 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.*;
 import java.sql.*;
@@ -9,6 +10,7 @@ import java.util.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 
 @RequiredArgsConstructor
+@Slf4j
 class SetterBasedReconstitutionFactory<T>
         implements ReconstitutionFactory<T> {
 
@@ -43,9 +45,10 @@ class SetterBasedReconstitutionFactory<T>
                     .orElseThrow(() -> new RuntimeException("No default constructor found for " + javaType.getName()));
             T instance = (T) c.newInstance();
             for (FieldMapping fieldMapping : fieldMappings) {
-                System.out.println("Setting " + fieldMapping.getAttributeName() + " to " + rs.getObject(fieldMapping.getAttributeName()));
+                Object fieldValue = rs.getObject(fieldMapping.getAttributeName());
+                log.debug("Setting {} to {}", fieldMapping.getAttributeName(), fieldValue);
                 setterFor(javaType, toJavaName(fieldMapping.getAttributeName()))
-                        .apply(instance, rs.getObject(fieldMapping.getAttributeName()));
+                        .apply(instance, fieldValue);
             }
             return instance;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {

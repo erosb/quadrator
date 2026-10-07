@@ -1,6 +1,7 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
 import java.util.*;
@@ -23,6 +24,7 @@ public interface Quadrator {
 }
 
 @RequiredArgsConstructor
+@Slf4j
 class DefaultQuadrator
         implements Quadrator {
 
@@ -93,7 +95,7 @@ class DefaultQuadrator
                             .collect(joining(", ")) + ") VALUES (" +
 
                     String.join(",", Collections.nCopies(allFieldMappings.size(), "?")) + ")";
-            System.out.println(sql);
+            log.debug("{}", sql);
             try {
                 var stmt = getConnection().prepareStatement(sql);
                 for (int i = 0; i < allFieldMappings.size(); i++) {

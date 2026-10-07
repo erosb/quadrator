@@ -30,7 +30,6 @@ public interface TypeMappingConfiguration<T> {
                             if (setterMethod.getParameterTypes()[0] == UUID.class) {
                                 pk = UUID.fromString(pk.toString());
                             }
-                            System.out.println(pk.getClass().getSimpleName() + " " + pk);
                             setterMethod.invoke(entity, pk);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
@@ -88,6 +87,7 @@ public interface TypeMappingConfiguration<T> {
         return concatFieldMappings(getPrimaryKeyMapping(), getFieldMappings());
     }
 }
+
 
 class TrivialTypeMappingConfiguration<T>
         implements TypeMappingConfiguration<T> {
