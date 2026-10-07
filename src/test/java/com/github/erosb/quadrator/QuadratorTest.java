@@ -16,11 +16,10 @@ public class QuadratorTest {
                 .dataSource(mysql(true))
                 .typeMapping(trivialMapping(User.class, "id"))
                 .typeMapping(TypeMappingConfiguration.builderFor(Event.class)
-                                .relationName("events")
-                                .primaryKeyMapping(Event::getId, "id", false)
-                                .fieldMapping(Event::getDescription, "description")
-//                        .reconstitutionFactory(new SetterBasedReconstitutionFactory<>(Event.class))
-                                .build()
+                        .relationName("events")
+                        .primaryKeyMapping(Event::getId, "id", false)
+                        .fieldMapping(Event::getDescription, "description")
+                        .build()
                 )
                 .build());
     }
@@ -31,7 +30,7 @@ public class QuadratorTest {
 
         User u = quadrator.requireByPK(User.class, 1);
 
-        assertEquals("asdasd", u.getName());
+        assertEquals("Alice", u.getName());
         assertEquals(1, u.getId());
     }
 
@@ -52,10 +51,10 @@ public class QuadratorTest {
     public void saveSuccess() {
         var quadrator = buildQuadrator();
 
-        User u = new User(3, "John D");
+        User u = new User(5, "John D");
         quadrator.save(u);
 
-        var actual = quadrator.requireByPK(User.class, 3);
+        var actual = quadrator.requireByPK(User.class, 5);
         assertEquals(u, actual);
     }
 
@@ -66,7 +65,7 @@ public class QuadratorTest {
         User u = new User(null, "John D");
         u = quadrator.save(u);
 
-        var actual = quadrator.requireByPK(User.class, 3);
+        var actual = quadrator.requireByPK(User.class, 5);
         assertEquals(u, actual);
     }
 

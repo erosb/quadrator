@@ -33,8 +33,13 @@ public class DataSources {
     private static void insertFixtures(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.execute("drop table if exists `user`");
-            st.execute("create table `user` (id int primary key auto_increment, name text)");
-            st.executeUpdate("insert into `user` (name) values ('asdasd'), ('bsdbsd')");
+            st.execute("drop table if exists `user_groups`");
+            st.execute("create table `user_groups` (name varchar(100) primary key)");
+            st.executeUpdate("insert into `user_groups` (name) values ('group1'), ('group2')");
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("create table `user` (id int primary key auto_increment, name text, group_name varchar(100) references user_groups(name))");
+            st.executeUpdate("insert into `user` (name, group_name) values ('Alice', null), ('Bob', 'group1'), ('Charlie', 'group1'), ('Daniel', 'group2')");
         }
         try (Statement st = conn.createStatement()) {
             st.execute("drop table if exists `events`");
