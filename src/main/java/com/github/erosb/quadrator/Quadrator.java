@@ -1,7 +1,7 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.*;
 
 import java.sql.*;
 import java.util.*;

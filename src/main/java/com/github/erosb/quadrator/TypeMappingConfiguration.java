@@ -159,6 +159,7 @@ class DefaultTypeMappingConfiguration<T>
     private final String relationName;
     private final Class<T> javaType;
     private final List<FieldMapping<T, ?>> fieldMappings;
+    private final List<ToManyMapping<T, ?>> associationMappings;
     private final FieldMapping<T, ?> primaryKeyMapping;
     private final ReconstitutionFactory<T> reconstitutionFactory;
 

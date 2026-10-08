@@ -49,7 +49,7 @@ public class TypeMappingConfigurationBuilder<T> {
             reconstitutionFactory = new SetterBasedReconstitutionFactory<>(type, concatFieldMappings(primaryKeyMapping, fieldMappings));
         }
         log.debug("fieldMappings = {}", fieldMappings);
-        return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, primaryKeyMapping,
+        return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, associationMappings, primaryKeyMapping,
                 reconstitutionFactory);
     }
 
