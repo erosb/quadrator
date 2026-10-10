@@ -35,7 +35,11 @@ class DefaultQuadrator
         try {
             var conn = getConnection();
             TypeMappingConfiguration typeMappingConfiguration = config.mappingConfigOfType(clazz);
-            var stmt = conn.prepareStatement(baseQuery(clazz) + " WHERE " + typeMappingConfiguration.getPrimaryKeyMapping().getAttributeName() + " = ?");
+            String sql = baseQuery(clazz) + " WHERE "
+                    + typeMappingConfiguration.getRelationName() + "."
+                    + typeMappingConfiguration.getPrimaryKeyMapping().getAttributeName() + " = ?";
+            log.debug("SQL: {}", sql);
+            var stmt = conn.prepareStatement(sql);
             stmt.setString(1, primaryKey.toString());
             var rs = stmt.executeQuery();
             if (rs.next()) {
@@ -54,7 +58,7 @@ class DefaultQuadrator
 
     @Override
     public <E> E save(E entity) {
-        TypeMappingConfiguration<E> mappingConfig = config.mappingConfigOfType(entity.getClass());
+        TypeMappingConfiguration<E> mappingConfig = config.mappingConfigOfType((Class<E>) entity.getClass());
         List<FieldMapping<E, ?>> fieldMappings = mappingConfig.getFieldMappings();
         if (mappingConfig.getPrimaryKeyMapping().isDbGenerated()) {
             String primaryKeyAttr = mappingConfig.getPrimaryKeyMapping().getAttributeName();
@@ -95,7 +99,7 @@ class DefaultQuadrator
                             .collect(joining(", ")) + ") VALUES (" +
 
                     String.join(",", Collections.nCopies(allFieldMappings.size(), "?")) + ")";
-            log.debug("{}", sql);
+            log.debug("SQL: {}", sql);
             try {
                 var stmt = getConnection().prepareStatement(sql);
                 for (int i = 0; i < allFieldMappings.size(); i++) {
@@ -112,9 +116,19 @@ class DefaultQuadrator
 
     private <E> String baseQuery(Class<E> clazz) {
         var mappingConfig = config.mappingConfigOfType(clazz);
-        String selectClause = "SELECT " + mappingConfig.getAttributeNames().stream().collect(joining(", "));
+        String selectClause = "SELECT " + mappingConfig.getAttributeNames().stream()
+                .map(attr -> "`" + mappingConfig.getRelationName() + "`.`" + attr + "`")
+                .collect(joining(", "));
         String fromClause = "FROM `" + mappingConfig.getRelationName() + "`";
-        return selectClause + " " + fromClause;
+        List<String> joinClauses = new ArrayList<>();
+        for (ToManyMapping<E, ?> m : mappingConfig.getAssociationMappings()) {
+            var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
+            joinClauses.add(" JOIN `" + manyTypeMapping.getRelationName()
+                    + "` ON `" + manyTypeMapping.getRelationName() + "`.`" + m.getForeignKeyAttributeName()
+                    + "` = `" + mappingConfig.getRelationName() + "`.`" + mappingConfig.getPrimaryKeyMapping().getAttributeName() + "`");
+        }
+
+        return selectClause + " " + fromClause + String.join(" ", joinClauses);
     }
 
     private <E> E instantiate(Class<E> clazz, ResultSet rs) {
@@ -122,7 +136,8 @@ class DefaultQuadrator
         constr.setAccessible(true);
         var mappingConfig = config.mappingConfigOfType(clazz);
         try {
-            return (E) mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs));
+            
+            return mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

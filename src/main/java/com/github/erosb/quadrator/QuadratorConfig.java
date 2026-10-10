@@ -24,8 +24,8 @@ public class QuadratorConfig {
 
     private final Map<Class<?>, TypeMappingConfiguration> typeMappingConfig;
 
-    TypeMappingConfiguration mappingConfigOfType(Class<?> type) {
-        TypeMappingConfiguration mappingConfig = typeMappingConfig.get(type);
+    <T> TypeMappingConfiguration<T> mappingConfigOfType(Class<T> type) {
+        TypeMappingConfiguration<T> mappingConfig = typeMappingConfig.get(type);
         if (mappingConfig == null) {
             throw new UnknownEntityTypeException(type);
         }

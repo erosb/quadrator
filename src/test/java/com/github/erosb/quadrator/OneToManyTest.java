@@ -3,6 +3,7 @@ package com.github.erosb.quadrator;
 import org.junit.jupiter.api.*;
 
 import static com.github.erosb.quadrator.DataSources.*;
+import static com.github.erosb.quadrator.ToManyMapping.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,7 +16,9 @@ public class OneToManyTest {
                 .typeMapping(TypeMappingConfiguration.builderFor(UserGroup.class)
                         .relationName("user_groups")
                         .primaryKeyMapping(UserGroup::getName, "name", false)
-                        .associationMapping(UserGroup::getMembers, "members")
+                        .associationMapping(hasMany(User.class)
+                                .accessedUsing(UserGroup::getMembers, "group_name")
+                                .build())
                         .build()
                 ).build()
         );

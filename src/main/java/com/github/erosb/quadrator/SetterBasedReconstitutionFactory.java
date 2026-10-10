@@ -1,10 +1,9 @@
 package com.github.erosb.quadrator;
 
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.*;
 
 import java.lang.reflect.*;
-import java.sql.*;
 import java.util.*;
 
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
@@ -36,8 +35,7 @@ class SetterBasedReconstitutionFactory<T>
     private final List<FieldMapping<T, ?>> fieldMappings;
 
     @Override
-    public T reconstitute(ResultSetAccessor rs)
-            throws SQLException {
+    public T reconstitute(ResultSetAccessor rs) {
         try {
             var c = Arrays.stream(javaType.getConstructors())
                     .filter(ctor -> ctor.getParameters().length == 0)

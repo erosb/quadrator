@@ -3,7 +3,6 @@ package com.github.erosb.quadrator;
 import lombok.*;
 import lombok.extern.slf4j.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
 
@@ -53,25 +52,9 @@ public class TypeMappingConfigurationBuilder<T> {
                 reconstitutionFactory);
     }
 
-    public <F> TypeMappingConfigurationBuilder<T> associationMapping(Function<T, F> getter, String name) {
-        boolean isToMany = singleAbstractMethod(getter).getReturnType().isAssignableFrom(Iterable.class);
-        if (!isToMany) {
-            throw new IllegalArgumentException("Association mapping is not to-many (not supported)");
-        }
-        var mapping = new ToManyMapping<>(this.relationName + "_" + primaryKeyMapping.getAttributeName(), getter);
-        this.associationMappings.add(mapping);
+    public <F> TypeMappingConfigurationBuilder<T> associationMapping(ToManyMapping<T, F> associationMapping) {
+        this.associationMappings.add(associationMapping);
         return this;
     }
 
-    private static <T, F> Method singleAbstractMethod(Function<T, F> members) {
-        List<Method> abstractMethods = Arrays.stream(members.getClass().getInterfaces())
-                .flatMap(iface -> Arrays.stream(iface.getMethods()))
-                .filter(method -> Modifier.isAbstract(method.getModifiers()))
-                .distinct()
-                .toList();
-        if (abstractMethods.size() != 1) {
-            throw new IllegalStateException("Expected exactly one abstract method, found " + abstractMethods.size());
-        }
-        return abstractMethods.getFirst();
-    }
 }
