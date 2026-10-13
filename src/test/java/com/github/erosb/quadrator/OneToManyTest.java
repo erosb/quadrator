@@ -17,6 +17,7 @@ public class OneToManyTest {
                         .relationName("user_groups")
                         .primaryKeyMapping(UserGroup::getName, "name", false)
                         .associationMapping(hasMany(User.class)
+                                .called("members")
                                 .accessedUsing(UserGroup::getMembers, "group_name")
                                 .build())
                         .build()
@@ -25,7 +26,7 @@ public class OneToManyTest {
     }
 
     @Test
-    void testQuery() {
+    void testQueryOneGroup() {
         Quadrator quadrator = buildQuadrator();
 
         var actual = quadrator.requireByPK(UserGroup.class, "group1");
@@ -36,6 +37,18 @@ public class OneToManyTest {
         ));
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    @Disabled
+    void zeroOnManySide() {
+
+    }
+
+    @Test
+    @Disabled
+    void queryManyGroups() {
+
     }
 
 

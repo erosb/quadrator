@@ -31,8 +31,8 @@ class SetterBasedReconstitutionFactory<T>
     }
 
     private final Class<T> javaType;
-
     private final List<FieldMapping<T, ?>> fieldMappings;
+    private final List<ToManyMapping<T, ?>> associationMappings;
 
     @Override
     public T reconstitute(ResultSetAccessor rs) {
@@ -47,6 +47,9 @@ class SetterBasedReconstitutionFactory<T>
                 log.debug("Setting {} to {}", fieldMapping.getAttributeName(), fieldValue);
                 setterFor(javaType, toJavaName(fieldMapping.getAttributeName()))
                         .apply(instance, fieldValue);
+            }
+            for (var assocMapping : associationMappings) {
+                setterFor(javaType, assocMapping.getMemberName()).apply(instance, rs.getMany(assocMapping.getMemberName()));
             }
             return instance;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {

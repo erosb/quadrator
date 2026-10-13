@@ -1,12 +1,11 @@
 package com.github.erosb.quadrator;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 
 public interface ResultSetAccessor {
 
-    static ResultSetAccessor of(Map<String, Object> attributesForReconst) {
+    static ResultSetAccessor of(Map<String, Object> attributesForReconst, Map<String, List<Object>> members) {
         return new ResultSetAccessor() {
             @Override
             public Object getObject(String columnName) {
@@ -22,10 +21,16 @@ public interface ResultSetAccessor {
             public String getString(String columnName) {
                 return (String) attributesForReconst.get(columnName);
             }
+
+
+            @Override
+            public <E> List<E> getMany(String memberName) {
+                return (List<E>) members.get(memberName);
+            }
         };
     }
 
-    static ResultSetAccessor of(ResultSet rs) {
+    static ResultSetAccessor of(ResultSet rs, Map<String, List<Object>> members) {
         return new ResultSetAccessor() {
             @Override
             public Object getObject(String columnName) {
@@ -53,6 +58,11 @@ public interface ResultSetAccessor {
                     throw new RuntimeException(e);
                 }
             }
+
+            @Override
+            public <E> List<E> getMany(String memberName) {
+                return (List<E>) members.get(memberName);
+            }
         };
     }
 
@@ -61,4 +71,6 @@ public interface ResultSetAccessor {
     Integer getInt(String columnName);
 
     String getString(String columnName);
+
+    <E> List<E> getMany(String memberName);
 }

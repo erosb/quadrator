@@ -127,7 +127,7 @@ class TrivialTypeMappingConfiguration<T>
 
     @Override
     public ReconstitutionFactory<T> getReconstitutionFactory() {
-        return new SetterBasedReconstitutionFactory<>(javaType, fieldMappings);
+        return new SetterBasedReconstitutionFactory<>(javaType, fieldMappings, getAssociationMappings());
     }
 
     @Override
