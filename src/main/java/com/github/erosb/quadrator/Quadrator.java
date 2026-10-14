@@ -35,7 +35,8 @@ class DefaultQuadrator
         try {
             var conn = getConnection();
             TypeMappingConfiguration typeMappingConfiguration = config.mappingConfigOfType(clazz);
-            String sql = baseQuery(clazz) + " WHERE "
+            String sql = new QueryConstructor(config).constructBaseQuery(clazz)
+                    + " WHERE "
                     + typeMappingConfiguration.getRelationName() + "."
                     + typeMappingConfiguration.getPrimaryKeyMapping().getAttributeName() + " = ?";
             log.debug("SQL: {}", sql);
