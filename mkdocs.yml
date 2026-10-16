@@ -1,0 +1,34 @@
+site_name: Quadrator
+site_url: https://erosb.github.io/quadrator/
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  icon:
+    annotation: material/arrow-right-circle-outline
+  color_mode: dark
+  palette:
+    scheme: slate
+    primary: black
+    accent: light blue
+  features:
+    - content.code.annotate
+    - content.code.copy
+
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - def_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - attr_list
+  # - md_in_html
+  # - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
