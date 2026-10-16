@@ -121,7 +121,7 @@ class DefaultQuadrator
         try {
 
             Map<String, List<Object>> manys = new HashMap<>();
-            E firstEntity;
+            E firstEntity = null;
             do {
                 for (var assocMapping : mappingConfig.getAssociationMappings()) {
                     var manyType = assocMapping.getManyType();
@@ -135,7 +135,9 @@ class DefaultQuadrator
                     }
                     aliasProvider.exitContext();
                 }
-                firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                if (rs.isLast()) {
+                    firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                }
             } while (rs.next());
             return firstEntity;
         } catch (SQLException e) {
