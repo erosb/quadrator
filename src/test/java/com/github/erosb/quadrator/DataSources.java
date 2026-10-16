@@ -31,7 +31,7 @@ public class DataSources {
             st.execute("drop table if exists `user`");
             st.execute("drop table if exists `user_groups`");
             st.execute("create table `user_groups` (name varchar(100) primary key)");
-            st.executeUpdate("insert into `user_groups` (name) values ('group1'), ('group2')");
+            st.executeUpdate("insert into `user_groups` (name) values ('group1'), ('group2'), ('empty_group')");
         }
         try (Statement st = conn.createStatement()) {
             st.execute("create table `user` (id int primary key auto_increment, name text, group_name varchar(100) references user_groups(name))");

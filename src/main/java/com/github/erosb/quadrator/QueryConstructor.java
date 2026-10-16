@@ -37,7 +37,7 @@ class QueryConstructor {
         List<String> joinClauses = new ArrayList<>();
         for (ToManyMapping<?, ?> m : mappingConfig.getAssociationMappings()) {
             var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
-            joinClauses.add(" JOIN `" + manyTypeMapping.getRelationName()
+            joinClauses.add(" LEFT JOIN `" + manyTypeMapping.getRelationName()
                     + "` ON `" + manyTypeMapping.getRelationName() + "`.`" + m.getForeignKeyAttributeName()
                     + "` = `" + rootTableName + "`.`" + mappingConfig.getPrimaryKeyMapping().getAttributeName() + "`");
         }

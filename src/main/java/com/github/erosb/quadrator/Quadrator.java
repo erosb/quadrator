@@ -128,10 +128,12 @@ class DefaultQuadrator
                     List<Object> entities = new ArrayList<>();
                     TypeMappingConfiguration<?> manyTypeConfig = config.mappingConfigOfType(manyType);
                     aliasProvider.enterContext(manyTypeConfig);
-                    var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                    if (entityExistsInRow(rs, aliasProvider, manyTypeConfig)) {
+                        var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                        entities.add(associatedEntity);
+                        manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>()).add(associatedEntity);
+                    }
                     aliasProvider.exitContext();
-                    entities.add(associatedEntity);
-                    manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>()).add(associatedEntity);
                 }
                 firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
             } while (rs.next());
@@ -139,6 +141,12 @@ class DefaultQuadrator
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean entityExistsInRow(ResultSet rs, AliasProvider aliasProvider, TypeMappingConfiguration<?> manyTypeConfig) throws SQLException {
+        var pkMapping = manyTypeConfig.getPrimaryKeyMapping();
+        var columnName = aliasProvider.aliasFor(pkMapping.getAttributeName());
+        return rs.getObject(columnName) != null;
     }
 
 }
