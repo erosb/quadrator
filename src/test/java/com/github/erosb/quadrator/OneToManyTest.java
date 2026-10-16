@@ -51,5 +51,16 @@ public class OneToManyTest {
 
     }
 
+    @Test
+    @Disabled
+    void persistUserGroup() {
+
+    }
+
+    @Test
+    @Disabled
+    void multipleOccurrencesOfRelation() {
+        
+    }
 
 }

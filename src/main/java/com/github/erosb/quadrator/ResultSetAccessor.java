@@ -30,12 +30,12 @@ public interface ResultSetAccessor {
         };
     }
 
-    static ResultSetAccessor of(ResultSet rs, Map<String, List<Object>> members) {
+    static ResultSetAccessor of(ResultSet rs, Map<String, List<Object>> members, AliasProvider aliasProvider) {
         return new ResultSetAccessor() {
             @Override
             public Object getObject(String columnName) {
                 try {
-                    return rs.getObject(columnName);
+                    return rs.getObject(aliasProvider.aliasFor(columnName));
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
@@ -44,7 +44,7 @@ public interface ResultSetAccessor {
             @Override
             public Integer getInt(String columnName) {
                 try {
-                    return rs.getInt(columnName);
+                    return rs.getInt(aliasProvider.aliasFor(columnName));
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
@@ -53,7 +53,7 @@ public interface ResultSetAccessor {
             @Override
             public String getString(String columnName) {
                 try {
-                    return rs.getString(columnName);
+                    return rs.getString(aliasProvider.aliasFor(columnName));
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }

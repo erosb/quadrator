@@ -115,33 +115,9 @@ class DefaultQuadrator
         return entity;
     }
 
-    private <E> String baseQuery(Class<E> clazz) {
-        var mappingConfig = config.mappingConfigOfType(clazz);
-        String selectClause = "SELECT " + mappingConfig.getAttributeNames().stream()
-                .map(attr -> "`" + mappingConfig.getRelationName() + "`.`" + attr + "`")
-                .collect(joining(", "));
-        selectClause += mappingConfig.getAssociationMappings().stream().map(m -> {
-            var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
-            return manyTypeMapping.getAttributeNames().stream()
-                    .map(attr -> "`" + manyTypeMapping.getRelationName() + "`.`" + attr + "`")
-                    .collect(joining(", ", ", ", ""));
-        }).collect(joining(", "));
-        String fromClause = "FROM `" + mappingConfig.getRelationName() + "`";
-        List<String> joinClauses = new ArrayList<>();
-        for (ToManyMapping<E, ?> m : mappingConfig.getAssociationMappings()) {
-            var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
-            joinClauses.add(" JOIN `" + manyTypeMapping.getRelationName()
-                    + "` ON `" + manyTypeMapping.getRelationName() + "`.`" + m.getForeignKeyAttributeName()
-                    + "` = `" + mappingConfig.getRelationName() + "`.`" + mappingConfig.getPrimaryKeyMapping().getAttributeName() + "`");
-        }
-
-        return selectClause + " " + fromClause + String.join(" ", joinClauses);
-    }
-
     private <E> E instantiate(Class<E> clazz, ResultSet rs) {
-        var constr = clazz.getConstructors()[0];
-        constr.setAccessible(true);
         var mappingConfig = config.mappingConfigOfType(clazz);
+        var aliasProvider = new AliasProvider(mappingConfig);
         try {
 
             Map<String, List<Object>> manys = new HashMap<>();
@@ -150,11 +126,14 @@ class DefaultQuadrator
                 for (var assocMapping : mappingConfig.getAssociationMappings()) {
                     var manyType = assocMapping.getManyType();
                     List<Object> entities = new ArrayList<>();
-                    var associatedEntity = config.mappingConfigOfType(manyType).getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys));
+                    TypeMappingConfiguration<?> manyTypeConfig = config.mappingConfigOfType(manyType);
+                    aliasProvider.enterContext(manyTypeConfig);
+                    var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                    aliasProvider.exitContext();
                     entities.add(associatedEntity);
                     manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>()).add(associatedEntity);
                 }
-                firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys));
+                firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
             } while (rs.next());
             return firstEntity;
         } catch (SQLException e) {
