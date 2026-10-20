@@ -127,16 +127,18 @@ class DefaultQuadrator
                     var manyType = assocMapping.getManyType();
                     List<Object> entities = new ArrayList<>();
                     TypeMappingConfiguration<?> manyTypeConfig = config.mappingConfigOfType(manyType);
-                    aliasProvider.enterContext(manyTypeConfig);
+                    aliasProvider.enterContext(assocMapping.getMemberName());
                     if (entityExistsInRow(rs, aliasProvider, manyTypeConfig)) {
-                        var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                        var resultSetAccessor = ResultSetAccessor.of(rs, manys, manyTypeConfig.getRelationName(), aliasProvider);
+                        var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(resultSetAccessor);
                         entities.add(associatedEntity);
                         manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>()).add(associatedEntity);
                     }
                     aliasProvider.exitContext();
                 }
                 if (rs.isLast()) {
-                    firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                    var resultSetAccessor = ResultSetAccessor.of(rs, manys, mappingConfig.getRelationName(), aliasProvider);
+                    firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(resultSetAccessor);
                 }
             } while (rs.next());
             return firstEntity;
@@ -147,7 +149,7 @@ class DefaultQuadrator
 
     private boolean entityExistsInRow(ResultSet rs, AliasProvider aliasProvider, TypeMappingConfiguration<?> manyTypeConfig) throws SQLException {
         var pkMapping = manyTypeConfig.getPrimaryKeyMapping();
-        var columnName = aliasProvider.aliasFor(pkMapping.getAttributeName());
+        var columnName = aliasProvider.aliasFor(manyTypeConfig.getRelationName(), pkMapping.getAttributeName());
         return rs.getObject(columnName) != null;
     }
 
