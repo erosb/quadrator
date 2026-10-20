@@ -6,6 +6,7 @@ import java.util.*;
 
 import static com.github.erosb.quadrator.DataSources.*;
 import static com.github.erosb.quadrator.ToManyMapping.*;
+import static com.github.erosb.quadrator.ToOneMapping.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,6 +23,11 @@ public class OneToManyTest {
                                 .called("members")
                                 .accessedUsing(UserGroup::getMembers, "group_name")
                                 .build())
+                        .associationMapping(hasOne(User.class)
+                                .called("creator")
+                                .accessedUsing(UserGroup::getCreator, "creator_id")
+                                .build()
+                        )
                         .build()
                 ).build()
         );
@@ -33,7 +39,7 @@ public class OneToManyTest {
 
         var actual = quadrator.requireByPK(UserGroup.class, "group1");
 
-        var expected = new UserGroup("group1", List.of(
+        var expected = new UserGroup("group1", new User(2, "Bob"), List.of(
                 new User(2, "Bob"),
                 new User(3, "Charlie")
         ));
@@ -47,7 +53,7 @@ public class OneToManyTest {
 
         var actual = quadrator.requireByPK(UserGroup.class, "empty_group");
 
-        var expected = new UserGroup("empty_group", null);
+        var expected = new UserGroup("empty_group", new User(2, "Bob"), null);
 
         assertEquals(expected, actual);
     }

@@ -16,7 +16,8 @@ public class TypeMappingConfigurationBuilder<T> {
     private String relationName;
     private FieldMapping<T, ?> primaryKeyMapping;
     private final List<FieldMapping<T, ?>> fieldMappings = new ArrayList<>();
-    private final List<ToManyMapping<T, ?>> associationMappings = new ArrayList<>();
+    private final List<ToManyMapping<T, ?>> toManyMappings = new ArrayList<>();
+    private final List<ToOneMapping<T, ?>> toOneMappings = new ArrayList<>();
     private ReconstitutionFactory<T> reconstitutionFactory;
 
     public TypeMappingConfigurationBuilder<T> relationName(String relationName) {
@@ -48,16 +49,25 @@ public class TypeMappingConfigurationBuilder<T> {
             reconstitutionFactory = new SetterBasedReconstitutionFactory<>(
                     type,
                     concatFieldMappings(primaryKeyMapping, fieldMappings),
-                    associationMappings
+                    toManyMappings,
+                    toOneMappings
             );
         }
         log.debug("fieldMappings = {}", fieldMappings);
-        return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings, associationMappings, primaryKeyMapping,
+        return new DefaultTypeMappingConfiguration<T>(relationName, type, fieldMappings,
+                toManyMappings,
+                toOneMappings,
+                primaryKeyMapping,
                 reconstitutionFactory);
     }
 
-    public <F> TypeMappingConfigurationBuilder<T> associationMapping(ToManyMapping<T, F> associationMapping) {
-        this.associationMappings.add(associationMapping);
+    public <F> TypeMappingConfigurationBuilder<T> associationMapping(ToManyMapping<T, ?> associationMapping) {
+        this.toManyMappings.add(associationMapping);
+        return this;
+    }
+
+    public <F> TypeMappingConfigurationBuilder<T> associationMapping(ToOneMapping<T, ?> associationMapping) {
+        this.toOneMappings.add(associationMapping);
         return this;
     }
 

@@ -6,12 +6,14 @@ import java.util.*;
 
 @RequiredArgsConstructor
 class DefaultTypeMappingConfiguration<T>
-        implements TypeMappingConfiguration {
+        implements TypeMappingConfiguration<T> {
 
     private final String relationName;
     private final Class<T> javaType;
     private final List<FieldMapping<T, ?>> fieldMappings;
-    private final List<ToManyMapping<T, ?>> associationMappings;
+    private final List<ToManyMapping<T, ?>> toManyMappings;
+    @Getter
+    private final List<ToOneMapping<T, ?>> toOneMappings;
     private final FieldMapping<T, ?> primaryKeyMapping;
     private final ReconstitutionFactory<T> reconstitutionFactory;
 
@@ -21,12 +23,12 @@ class DefaultTypeMappingConfiguration<T>
     }
 
     @Override
-    public ReconstitutionFactory<?> getReconstitutionFactory() {
+    public ReconstitutionFactory<T> getReconstitutionFactory() {
         return reconstitutionFactory;
     }
 
     @Override
-    public Class<?> getType() {
+    public Class<T> getType() {
         return javaType;
     }
 
@@ -50,6 +52,6 @@ class DefaultTypeMappingConfiguration<T>
 
     @Override
     public List<ToManyMapping<T, ?>> getAssociationMappings() {
-        return associationMappings;
+        return toManyMappings;
     }
 }

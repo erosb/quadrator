@@ -7,13 +7,10 @@ import java.util.function.*;
 @Value
 public class ToManyMapping<T, F> {
 
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     public static class ToManyMappingBuilderInitiator<F> {
-        Class<F> manyType;
+        final @NonNull Class<F> manyType;
         String memberName;
-
-        private ToManyMappingBuilderInitiator(@NonNull Class<F> manyType) {
-            this.manyType = manyType;
-        }
 
         public <T> ToManyMappingBuilder<T, F> accessedUsing(@NonNull Function<T, Iterable<F>> getter, @NonNull String foreignKeyAttributeName) {
             ToManyMappingBuilder<T, F> builder = new ToManyMappingBuilder<>();

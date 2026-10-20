@@ -4,6 +4,8 @@ import java.util.*;
 
 class AliasProvider {
 
+    private final Map<String, Integer> occurrencesOfRelations = new HashMap<>();
+
     private final Stack<TypeMappingConfiguration<?>> contexts = new Stack<>();
 
     AliasProvider(TypeMappingConfiguration<?> rootContext) {
@@ -15,10 +17,12 @@ class AliasProvider {
     }
 
     public String aliasForRelation() {
-        return contexts.peek().getRelationName();
+        String relationName = contexts.peek().getRelationName();
+        return relationName + "_" + occurrencesOfRelations.get(relationName);
     }
 
     public void enterContext(TypeMappingConfiguration<?> manyTypeMapping) {
+        occurrencesOfRelations.compute(manyTypeMapping.getRelationName(), (k, v) -> v == null ? 0 : v + 1);
         contexts.push(manyTypeMapping);
     }
 

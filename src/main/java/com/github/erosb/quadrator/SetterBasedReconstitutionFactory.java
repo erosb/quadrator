@@ -32,7 +32,8 @@ class SetterBasedReconstitutionFactory<T>
 
     private final Class<T> javaType;
     private final List<FieldMapping<T, ?>> fieldMappings;
-    private final List<ToManyMapping<T, ?>> associationMappings;
+    private final List<ToManyMapping<T, ?>> toManyMappings;
+    private final List<ToOneMapping<T, ?>> toOneMappings;
 
     @Override
     public T reconstitute(ResultSetAccessor rs) {
@@ -48,7 +49,7 @@ class SetterBasedReconstitutionFactory<T>
                 setterFor(javaType, toJavaName(fieldMapping.getAttributeName()))
                         .apply(instance, fieldValue);
             }
-            for (var assocMapping : associationMappings) {
+            for (var assocMapping : toManyMappings) {
                 setterFor(javaType, assocMapping.getMemberName()).apply(instance, rs.getMany(assocMapping.getMemberName()));
             }
             return instance;
