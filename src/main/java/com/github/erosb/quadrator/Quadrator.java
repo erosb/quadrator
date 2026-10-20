@@ -137,6 +137,9 @@ class DefaultQuadrator
                     aliasProvider.exitContext();
                 }
                 if (rs.isLast()) {
+                    for (var toOneMapping : mappingConfig.getToOneMappings()) {
+                        
+                    }
                     var resultSetAccessor = ResultSetAccessor.of(rs, manys, mappingConfig.getRelationName(), aliasProvider);
                     firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(resultSetAccessor);
                 }
