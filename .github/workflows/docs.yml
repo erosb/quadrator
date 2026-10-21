@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
       - name: Build documentation
         run: python scripts/mkdocs.py build --strict
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
