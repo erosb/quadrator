@@ -26,7 +26,7 @@ public interface Quadrator {
 @RequiredArgsConstructor
 @Slf4j
 class DefaultQuadrator
-        implements Quadrator {
+                implements Quadrator {
 
     private final QuadratorConfig config;
 
@@ -36,9 +36,9 @@ class DefaultQuadrator
             var conn = getConnection();
             TypeMappingConfiguration typeMappingConfiguration = config.mappingConfigOfType(clazz);
             String sql = new QueryConstructor(config).constructBaseQuery(clazz)
-                    + " WHERE "
-                    + typeMappingConfiguration.getRelationName() + "."
-                    + typeMappingConfiguration.getPrimaryKeyMapping().getAttributeName() + " = ?";
+                            + " WHERE "
+                            + typeMappingConfiguration.getRelationName() + "."
+                            + typeMappingConfiguration.getPrimaryKeyMapping().getAttributeName() + " = ?";
             log.debug("SQL: {}", sql);
             var stmt = conn.prepareStatement(sql);
             stmt.setString(1, primaryKey.toString());
@@ -53,7 +53,7 @@ class DefaultQuadrator
     }
 
     private Connection getConnection()
-            throws SQLException {
+                    throws SQLException {
         return config.getDataSource().getConnection(); //DriverManager.getConnection(config.getConnection());
     }
 
@@ -64,14 +64,14 @@ class DefaultQuadrator
         if (mappingConfig.getPrimaryKeyMapping().isDbGenerated()) {
             String primaryKeyAttr = mappingConfig.getPrimaryKeyMapping().getAttributeName();
             List<FieldMapping<E, ?>> insertedFields = fieldMappings.stream()
-                    .filter(fm -> !fm.getAttributeName().equals(primaryKeyAttr))
-                    .toList();
+                            .filter(fm -> !fm.getAttributeName().equals(primaryKeyAttr))
+                            .toList();
             var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
-                    insertedFields.stream()
-                            .map(FieldMapping::getAttributeName)
-                            .collect(joining(", ")) + ") VALUES (" +
+                            insertedFields.stream()
+                                            .map(FieldMapping::getAttributeName)
+                                            .collect(joining(", ")) + ") VALUES (" +
 
-                    String.join(",", Collections.nCopies(insertedFields.size(), "?")) + ")";
+                            String.join(",", Collections.nCopies(insertedFields.size(), "?")) + ")";
             try {
                 var stmt = getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
                 Map<String, Object> attributesForReconst = new HashMap<>();
@@ -84,10 +84,12 @@ class DefaultQuadrator
                 stmt.executeUpdate();
                 ResultSet generated = stmt.getGeneratedKeys();
 
-                if (!generated.next()) throw new IllegalStateException();
+                if (!generated.next())
+                    throw new IllegalStateException();
                 attributesForReconst.put(primaryKeyAttr, generated.getObject(1));
 
-                return mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(attributesForReconst, Map.of()));
+                return mappingConfig.getReconstitutionFactory()
+                                .reconstitute(ResultSetAccessor.of(attributesForReconst, Map.of()));
 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -95,11 +97,11 @@ class DefaultQuadrator
         } else {
             var allFieldMappings = mappingConfig.allFieldMappings();
             var sql = "INSERT INTO `" + mappingConfig.getRelationName() + "` (" +
-                    allFieldMappings.stream()
-                            .map(FieldMapping::getAttributeName)
-                            .collect(joining(", ")) + ") VALUES (" +
+                            allFieldMappings.stream()
+                                            .map(FieldMapping::getAttributeName)
+                                            .collect(joining(", ")) + ") VALUES (" +
 
-                    String.join(",", Collections.nCopies(allFieldMappings.size(), "?")) + ")";
+                            String.join(",", Collections.nCopies(allFieldMappings.size(), "?")) + ")";
             log.debug("SQL: {}", sql);
             try {
                 var stmt = getConnection().prepareStatement(sql);
@@ -127,16 +129,35 @@ class DefaultQuadrator
                     var manyType = assocMapping.getManyType();
                     List<Object> entities = new ArrayList<>();
                     TypeMappingConfiguration<?> manyTypeConfig = config.mappingConfigOfType(manyType);
-                    aliasProvider.enterContext(manyTypeConfig);
-                    if (entityExistsInRow(rs, aliasProvider, manyTypeConfig)) {
-                        var associatedEntity = manyTypeConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
-                        entities.add(associatedEntity);
-                        manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>()).add(associatedEntity);
+                    var assocEntity = aliasProvider.inContext(assocMapping.getMemberName(), () -> {
+                        if (entityExistsInRow(rs, aliasProvider, manyTypeConfig)) {
+                            var resultSetAccessor = ResultSetAccessor.of(rs, manys,
+                                            manyTypeConfig.getRelationName(),
+                                            aliasProvider);
+                            var associatedEntity = manyTypeConfig.getReconstitutionFactory()
+                                            .reconstitute(resultSetAccessor);
+                            return associatedEntity;
+                        }
+                        return null;
+                    });
+                    if (assocEntity != null) {
+                        entities.add(assocEntity);
+                        manys.computeIfAbsent(assocMapping.getMemberName(), k -> new ArrayList<>())
+                                        .add(assocEntity);
                     }
-                    aliasProvider.exitContext();
                 }
                 if (rs.isLast()) {
-                    firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(ResultSetAccessor.of(rs, manys, aliasProvider));
+                    for (var toOneMapping : mappingConfig.getToOneMappings()) {
+                        var associatedType = toOneMapping.getMemberType();
+                        var associatedTypeConfig = config.mappingConfigOfType(associatedType);
+                        var resultSetAccessor = ResultSetAccessor.of(rs, Map.of(),
+                                        associatedTypeConfig.getRelationName(), aliasProvider);
+                        var assocObj = associatedTypeConfig.getReconstitutionFactory().reconstitute(resultSetAccessor);
+                        manys.put(toOneMapping.getMemberName(), List.of(assocObj));
+                    }
+                    var resultSetAccessor = ResultSetAccessor.of(rs, manys, mappingConfig.getRelationName(),
+                                    aliasProvider);
+                    firstEntity = mappingConfig.getReconstitutionFactory().reconstitute(resultSetAccessor);
                 }
             } while (rs.next());
             return firstEntity;
@@ -145,9 +166,10 @@ class DefaultQuadrator
         }
     }
 
-    private boolean entityExistsInRow(ResultSet rs, AliasProvider aliasProvider, TypeMappingConfiguration<?> manyTypeConfig) throws SQLException {
+    private boolean entityExistsInRow(ResultSet rs, AliasProvider aliasProvider,
+                    TypeMappingConfiguration<?> manyTypeConfig) throws SQLException {
         var pkMapping = manyTypeConfig.getPrimaryKeyMapping();
-        var columnName = aliasProvider.aliasFor(pkMapping.getAttributeName());
+        var columnName = aliasProvider.aliasFor(manyTypeConfig.getRelationName(), pkMapping.getAttributeName());
         return rs.getObject(columnName) != null;
     }
 

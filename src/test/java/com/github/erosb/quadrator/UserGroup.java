@@ -9,5 +9,6 @@ import java.util.*;
 @AllArgsConstructor
 public class UserGroup {
     String name;
+    User creator;
     List<User> members;
 }

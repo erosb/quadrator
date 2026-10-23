@@ -86,6 +86,8 @@ public interface TypeMappingConfiguration<T> {
     default List<FieldMapping<T, ?>> allFieldMappings() {
         return concatFieldMappings(getPrimaryKeyMapping(), getFieldMappings());
     }
+
+    List<ToOneMapping<T, ?>> getToOneMappings();
 }
 
 
@@ -127,7 +129,7 @@ class TrivialTypeMappingConfiguration<T>
 
     @Override
     public ReconstitutionFactory<T> getReconstitutionFactory() {
-        return new SetterBasedReconstitutionFactory<>(javaType, fieldMappings, getAssociationMappings());
+        return new SetterBasedReconstitutionFactory<>(javaType, fieldMappings, getAssociationMappings(), List.of());
     }
 
     @Override
@@ -151,6 +153,11 @@ class TrivialTypeMappingConfiguration<T>
 
     @Override
     public List<ToManyMapping<T, ?>> getAssociationMappings() {
+        return List.of();
+    }
+
+    @Override
+    public List<ToOneMapping<T, ?>> getToOneMappings() {
         return List.of();
     }
 
