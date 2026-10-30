@@ -6,20 +6,39 @@ import java.util.*;
 
 import static java.util.stream.Collectors.*;
 
-sealed interface Expr permits AliasedExpr, QualifiedIdentifier, Identifier {
+sealed interface Expr permits AliasedExpr, BinaryExpr, Identifier, QualifiedIdentifier {
+    default AliasedExpr as(String alias) {
+        return new AliasedExpr(this, alias);
+    }
+}
 
+record BinaryExpr(Expr left, String operator, Expr right) implements Expr {
 }
 
 record Identifier(String ident) implements Expr {
+    QualifiedIdentifier attr(String attr) {
+        return new QualifiedIdentifier(this, new Identifier(attr));
+    }
+
+    AliasedExpr aliased(AliasProvider aliasProvider) {
+        return new AliasedExpr(this, aliasProvider.aliasForRelation(ident));
+    }
 }
 
 record AliasedExpr(Expr expr, String alias) implements Expr {
 }
 
 record QualifiedIdentifier(Identifier relation, Identifier attribute) implements Expr {
+    AliasedExpr aliased(AliasProvider aliasProvider) {
+        return new AliasedExpr(new Identifier(aliasProvider.aliasForRelation(relation.ident())),
+                        aliasProvider.aliasFor(relation.ident(), attribute.ident()));
+    }
 }
 
-record SQLSelect(List<Expr> expressions, Expr from) {
+record JoinClause(Expr relation, Expr condition) {
+}
+
+record SQLSelect(List<Expr> expressions, Expr from, List<JoinClause> joinConditions) {
 }
 
 class SQLSerializer {
@@ -27,16 +46,21 @@ class SQLSerializer {
 
     String serialize(SQLSelect sql) {
         sb.append("SELECT ");
-        sb.append(sql.expressions().stream().map(this::serialize).collect(joining(", ")));
-        sb.append(" FROM ").append(serialize(sql.from()));
+        sb.append(sql.expressions().stream().map(this::serialize).collect(joining(",\n\t\t")));
+        sb.append("\n\tFROM ").append(serialize(sql.from()));
+        sb.append(sql.joinConditions().stream()
+                        .map(join -> "\n\tLEFT JOIN " + serialize(join.relation()) + " ON " + serialize(
+                                        join.condition()))
+                        .collect(joining()));
         return sb.toString();
     }
 
     private String serialize(Expr expr) {
         return switch (expr) {
             case AliasedExpr i -> serialize(i.expr()) + " AS " + esc(i.alias());
-            case QualifiedIdentifier qualifiedIdentifier -> throw new UnsupportedOperationException();
-            case Identifier identifier -> throw new UnsupportedOperationException();
+            case QualifiedIdentifier ident -> serialize(ident.relation()) + "." + serialize(ident.attribute());
+            case Identifier identifier -> esc(identifier.ident());
+            case BinaryExpr bin -> serialize(bin.left()) + " " + bin.operator() + " " + serialize(bin.right());
         };
     }
 
@@ -48,6 +72,10 @@ class SQLSerializer {
 @RequiredArgsConstructor
 class QueryConstructor {
 
+    private static Identifier ident(String ident) {
+        return new Identifier(ident);
+    }
+
     private final QuadratorConfig config;
 
     String constructBaseQuery(Class<?> entityClass) {
@@ -55,62 +83,60 @@ class QueryConstructor {
         var aliasProvider = new AliasProvider(mappingConfig);
         String rootTableName = aliasProvider.aliasForRelation(mappingConfig.getRelationName());
         List<Expr> selectExprs = new ArrayList<>();
+        List<JoinClause> joins = new ArrayList<>();
         mappingConfig.getAttributeNames().stream()
-                .map(attr -> new AliasedExpr(
-                        new QualifiedIdentifier(new Identifier(rootTableName), new Identifier(attr)),
-                        aliasProvider.aliasFor(rootTableName, attr))
-                )
-                .forEach(selectExprs::add);
-        Expr from = new Identifier(rootTableName);
-        var sqlSelect = new SQLSelect(selectExprs, from);
-        String selectClause = "SELECT " + mappingConfig.getAttributeNames().stream()
-                .map(attr -> "`" + rootTableName + "`.`" + attr + "` AS `" + aliasProvider.aliasFor(
-                        mappingConfig.getRelationName(), attr) + "`")
-                .collect(joining(", "));
-        selectClause += mappingConfig.getAssociationMappings().stream().map(m -> {
-            var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
-            return aliasProvider.inContext(m.getMemberName(), () -> manyTypeMapping.getAttributeNames().stream()
-                    .map(attr -> "`" + manyTypeMapping.getRelationName() + "`.`" + attr
-                            + "` AS `" + aliasProvider.aliasFor(manyTypeMapping.getRelationName(),
-                            attr) + "`")
-                    .collect(joining(", ", ", ", "")));
-        }).collect(joining(", "));
+                        .map(attr ->
+                                        ident(rootTableName).attr(attr).as(aliasProvider.aliasFor(rootTableName, attr))
+                        )
+                        .forEach(selectExprs::add);
+        Expr from = ident(rootTableName);
 
-        selectClause += mappingConfig.getToOneMappings().stream().map(m -> {
-            var assocTypeMapping = config.mappingConfigOfType(m.getMemberType());
-            return aliasProvider.inContext(m.getMemberName(), () ->
-                    assocTypeMapping.getAttributeNames().stream()
-                            .map(attr -> "`" + aliasProvider.aliasForRelation(
-                                    assocTypeMapping.getRelationName()) + "`.`" + attr
-                                    + "` AS `" + aliasProvider.aliasFor(
-                                    assocTypeMapping.getRelationName(),
-                                    attr) + "`")
-                            .collect(joining(", ", ", ", ""))
-            );
-        }).collect(joining(", "));
-
-        String fromClause = "FROM `" + rootTableName + "`";
-        List<String> joinClauses = new ArrayList<>();
-        for (ToManyMapping<?, ?> m : mappingConfig.getAssociationMappings()) {
+        for (var m : mappingConfig.getAssociationMappings()) {
             var manyTypeMapping = config.mappingConfigOfType(m.getManyType());
-            joinClauses.add(aliasProvider.inContext(m.getMemberName(), () ->
-                    " LEFT JOIN `" + manyTypeMapping.getRelationName() + "` AS `"
-                            + aliasProvider.aliasForRelation(manyTypeMapping.getRelationName())
-                            + "` ON `" + manyTypeMapping.getRelationName() + "`.`" + m.getForeignKeyAttributeName()
-                            + "` = `" + rootTableName + "`.`" + mappingConfig.getPrimaryKeyMapping().getAttributeName()
-                            + "`"
-            ));
+            selectExprs.addAll(aliasProvider.inContext(m.getMemberName(), () ->
+                            manyTypeMapping.getAttributeNames().stream().map(attr ->
+                                ident(aliasProvider.aliasForRelation(manyTypeMapping.getRelationName())).attr(attr)
+                                            .as(aliasProvider.aliasFor(manyTypeMapping.getRelationName(), attr))
+            ).toList()));
+            String pkAttr = mappingConfig.getPrimaryKeyMapping().getAttributeName();
+            joins.add(aliasProvider.inContext(m.getMemberName(), () ->
+                            new JoinClause(ident(manyTypeMapping.getRelationName()).aliased(aliasProvider), // as(
+//                                            aliasProvider.aliasForRelation(manyTypeMapping.getRelationName()))
+                                            new BinaryExpr(
+                                                            ident(aliasProvider.aliasForRelation(
+                                                                            manyTypeMapping.getRelationName())
+                                                            ).attr(m.getForeignKeyAttributeName()),
+                                                            "=",
+                                                            ident(rootTableName).attr(pkAttr)
+                                            )
+                            )));
         }
-        for (ToOneMapping<?, ?> m : mappingConfig.getToOneMappings()) {
+
+        for (var m : mappingConfig.getToOneMappings()) {
+            selectExprs.addAll(aliasProvider.inContext(m.getMemberName(), () -> {
+                var assocTypeMapping = config.mappingConfigOfType(m.getMemberType());
+                return assocTypeMapping.getAttributeNames().stream().map(attr ->
+                                ident(aliasProvider.aliasForRelation(assocTypeMapping.getRelationName())).attr(attr)
+                                                .as(aliasProvider.aliasFor(assocTypeMapping.getRelationName(), attr))
+                ).toList();
+            }));
+
             var oneTypeMapping = config.mappingConfigOfType(m.getMemberType());
-            joinClauses.add(aliasProvider.inContext(m.getMemberName(), () ->
-                    " LEFT JOIN `" + oneTypeMapping.getRelationName() + "` AS `"
-                            + aliasProvider.aliasForRelation(oneTypeMapping.getRelationName())
-                            + "` ON `" + aliasProvider.aliasForRelation(oneTypeMapping.getRelationName()) + "`.`"
-                            + oneTypeMapping.getPrimaryKeyMapping().getAttributeName()
-                            + "` = `" + rootTableName + "`.`" + m.getForeignKeyAttributeName() + "`"
-            ));
+            joins.add(aliasProvider.inContext(m.getMemberName(), () -> {
+                String joinedAlias = aliasProvider.aliasForRelation(oneTypeMapping.getRelationName());
+                String foreignKeyAttr = oneTypeMapping.getPrimaryKeyMapping().getAttributeName();
+                return new JoinClause(
+                                ident(oneTypeMapping.getRelationName()).as(joinedAlias),
+                                new BinaryExpr(
+                                                ident(joinedAlias).attr(foreignKeyAttr),
+                                                "=",
+                                                ident(rootTableName).attr(m.getForeignKeyAttributeName())
+
+                                )
+                );
+            }));
         }
-        return new SQLSerializer().serialize(sqlSelect) + "\n" + String.join("\n", joinClauses);
+        var sqlSelect = new SQLSelect(selectExprs, from, joins);
+        return new SQLSerializer().serialize(sqlSelect);
     }
 }
