@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 
 import javax.sql.*;
 import java.sql.*;
+import java.util.*;
 
 import static com.github.erosb.quadrator.DataSources.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +26,7 @@ public class ReconstitutionFactoryTest {
                         .relationName("users")
                         .primaryKeyMapping(User::getId, "id")
                         .fieldMapping(User::getName, "user_name")
-                        .reconstitutionFactory(rs -> new User(rs.getInt("id"), rs.getString("user_name")))
+                        .reconstitutionFactory(rs -> new User(rs.getInt("id"), rs.getString("user_name"), List.of()))
                         .build()
                 )
                 .build());

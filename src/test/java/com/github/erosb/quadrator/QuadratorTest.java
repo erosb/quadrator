@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 
 import static com.github.erosb.quadrator.DataSources.*;
 import static com.github.erosb.quadrator.TypeMappingConfiguration.*;
+import static com.github.erosb.quadrator.UserFixtures.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class QuadratorTest {
@@ -51,7 +52,7 @@ public class QuadratorTest {
     public void saveSuccess() {
         var quadrator = buildQuadrator();
 
-        User u = new User(5, "John D");
+        User u = ethan();
         quadrator.save(u);
 
         var actual = quadrator.requireByPK(User.class, 5);
@@ -62,7 +63,7 @@ public class QuadratorTest {
     public void saveWithoutId() {
         var quadrator = buildQuadrator();
 
-        User u = new User(null, "John D");
+        User u = ethan();
         u = quadrator.save(u);
 
         var actual = quadrator.requireByPK(User.class, 5);
